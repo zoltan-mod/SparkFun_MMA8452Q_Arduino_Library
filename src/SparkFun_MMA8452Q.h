@@ -97,6 +97,8 @@ public:
     void read();
 	byte available();
 	byte readTap();
+    void setupKnock(byte thresh, byte countDB);
+    byte readKnock();
 	byte readPL();
 	
     short x, y, z;

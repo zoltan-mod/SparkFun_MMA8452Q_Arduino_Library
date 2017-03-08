@@ -175,6 +175,50 @@ byte MMA8452Q::readTap()
 		return 0;
 }
 
+// SET UP KNOCK(TRANSIENT) DETECTION
+//	This function can set up knock detection.
+//	The thresh parameter sets the threshold at which a transient triggers an interrupt flag
+//		thresh[7]       Debounce counter mode (see datasheet, 0 is default)
+//      thresh[6:0]     Acceleration threshold value. This is on a full 8g scale, regardless
+//                      of the sensitivity setting of the device.  0.063g/count
+//  The countDB parameter sets up the debounce counter
+//      This is the number of ticks that a transient must persist for the interrupt to trigger.
+//      Each count in the register corresponds to one tick at the ODR
+void MMA8452Q::setupKnock(byte thresh, byte countDB)
+{
+	// Device in standby mode to change
+    standby();
+    // Enable all axes and latch
+    writeRegister(TRANSIENT_CFG, 0b0001110);
+    // Configure the threshold
+    writeRegister(TRANSIENT_THS, thresh);
+    // Set the debounce counter
+    writeRegister(TRANSIENT_COUNT, countDB);
+    // Device active;
+    active();
+}
+
+// READ KNOCK STATUS
+//	This function will return the TRANSIENT_SRC register if a transient is detected, otherwise 0
+//  The bits of the register are as follows:
+//      6   Event Active
+//      5   Z Transient
+//      4   Z Transient polarity
+//      3   Y Transient
+//      2   Y Transient polarity
+//      1   X Transient
+//      0   X Transient polarity
+byte MMA8452Q::readKnock()
+{
+	byte knockStat = readRegister(TRANSIENT_SRC);
+	if (knockStat & 0x40) // Read EA bit to check if a interrupt was generated
+	{
+		return knockStat;
+	}
+	else
+		return 0;
+}
+
 // SET UP PORTRAIT/LANDSCAPE DETECTION
 //	This function sets up portrait and landscape detection.
 void MMA8452Q::setupPL()
